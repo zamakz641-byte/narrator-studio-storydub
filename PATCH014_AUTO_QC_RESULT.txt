@@ -1,0 +1,15 @@
+PATCH014 AUTO-QC
+Target: D:\manhwa studio\NarratorStudio_StoryDub_v1_3
+Backup: D:\manhwa studio\NarratorStudio_StoryDub_v1_3\backup_patch014_20260821_003219
+Self-test code: 0
+
+SELF TEST OK
+ - Python syntax OK
+ - JavaScript sans bridge PyWebView
+ - API HTTP locale active
+ - 2 narrateurs configur�s
+ - chunker court + rescue splitter actifs
+ - Auto-QC Faster-Whisper d�tect� quand disponible
+ - chunker=5 chunks; rescue=3 sous-chunks; safe='After he turns himself in, he is locked inside a containment vault.'; QC good=1.00/bad=0.35
+ - d�tection=StoryRecapper � script_studio_023.tts_capabilities
+ - auto_qc=ready

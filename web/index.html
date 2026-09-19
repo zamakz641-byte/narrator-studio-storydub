@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Narrator Studio</title>
+  <link rel="stylesheet" href="styles.css?v=1.5" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">N</div>
+      <strong>Narrator Studio</strong>
+      <span class="subtle">StoryDub</span>
+    </div>
+    <div class="runtime-pill" id="runtimePill"><span class="dot"></span><span id="runtimeText">Chargement…</span></div>
+    <div class="top-actions">
+      <button class="ghost" id="folderBtn" title="Ouvrir le dossier des générations">Dossier</button>
+      <button class="icon-btn" id="clearBtn" title="Effacer le texte">⌫</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="editor-panel">
+      <div class="editor-wrap">
+        <textarea id="textInput" spellcheck="false" placeholder="Colle ici ton script…"></textarea>
+        <div class="editor-footer">
+          <span id="counter">0 caractères · 0 mots</span>
+          <button class="mini" id="pasteBtn">Coller</button>
+        </div>
+      </div>
+
+      <div class="player-card hidden" id="playerCard">
+        <div class="player-head">
+          <div>
+            <strong id="playerTitle">Audio généré</strong>
+            <span id="playerMeta">—</span>
+          </div>
+          <button class="save-btn" id="saveBtn">↓ Sauvegarder</button>
+        </div>
+        <audio id="audioPlayer" controls preload="metadata"></audio>
+      </div>
+
+      <div class="generate-bar">
+        <div class="status-area">
+          <div class="progress-track"><div id="progressBar"></div></div>
+          <div class="status-line"><span id="statusText">Prêt</span><span id="statusPct"></span></div>
+        </div>
+        <button class="cancel hidden" id="cancelBtn">Annuler</button>
+        <button class="generate" id="generateBtn">Générer l'audio</button>
+      </div>
+    </section>
+
+    <aside class="settings-panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="settings">Réglages</button>
+        <button class="tab" data-tab="qwenClone">Cloner Qwen</button>
+        <button class="tab" data-tab="history">Historique</button>
+      </div>
+
+      <div id="settingsTab" class="tab-page active">
+        <section class="setting-section">
+          <label for="engineSelect">Moteur TTS</label>
+          <select id="engineSelect">
+            <option value="omnivoice">OmniVoice HQ · CUDA</option>
+            <option value="qwen">Qwen3-TTS 0.6B Base · CUDA</option>
+          </select>
+          <p class="hint" id="engineHint">OmniVoice local + Auto-QC Faster-Whisper.</p>
+        </section>
+
+        <section class="setting-section">
+          <div class="label-row"><label>Voix</label><span class="engine-chip" id="voiceEngineChip">OmniVoice</span></div>
+          <div id="voiceCards" class="voice-cards"></div>
+          <p class="hint hidden" id="noQwenVoices">Aucune voix Qwen. Utilise l’onglet « Cloner Qwen ».</p>
+        </section>
+
+        <section class="setting-section" id="speedSection">
+          <div class="label-row"><label for="speedRange">Vitesse</label><strong id="speedValue">1.00×</strong></div>
+          <input id="speedRange" type="range" min="0.70" max="1.35" value="1.00" step="0.01" />
+          <div class="range-labels"><span>Plus lent</span><span>Normal</span><span>Plus rapide</span></div>
+          <p class="hint hidden" id="qwenSpeedHint">Qwen Base garde la cadence de la voix clonée. Le contrôle de vitesse OmniVoice est désactivé pour ce moteur.</p>
+        </section>
+
+        <section class="setting-section" id="stepsSection">
+          <label for="stepsSelect">Qualité / Steps OmniVoice</label>
+          <select id="stepsSelect">
+            <option value="12">12 · Performance</option>
+            <option value="16">16 · Rapide</option>
+            <option value="20">20 · Équilibré</option>
+            <option value="24">24 · Haute qualité</option>
+            <option value="32">32 · Maximum</option>
+          </select>
+        </section>
+
+        <section class="setting-section two-col">
+          <div>
+            <label for="languageSelect">Langue</label>
+            <select id="languageSelect">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
+          <div>
+            <label>Sortie</label>
+            <div class="static-field">WAV · 24 kHz</div>
+          </div>
+        </section>
+
+        <div class="runtime-box">
+          <div><span>GPU</span><strong id="gpuText">Détection…</strong></div>
+          <div><span>Runtime actif</span><strong id="runtimeCheck">Vérification…</strong></div>
+          <div><span>Voix</span><strong id="voiceCheck">Vérification…</strong></div>
+          <div><span>Auto-QC</span><strong id="qcCheck">Vérification…</strong></div>
+        </div>
+      </div>
+
+      <div id="qwenCloneTab" class="tab-page">
+        <section class="setting-section">
+          <div class="clone-title-row">
+            <div>
+              <strong>Qwen3-TTS 0.6B Base</strong>
+              <span>Clone natif .pt réutilisable · ICL HQ + x-vector fallback · Faster-Whisper Turbo</span>
+            </div>
+            <span class="engine-chip">0.6B</span>
+          </div>
+          <div class="qwen-model-box">
+            <div><span>Runtime Qwen</span><strong id="qwenRuntimeState">Vérification…</strong></div>
+            <div><span>Poids locaux</span><strong id="qwenModelState">Vérification…</strong></div>
+            <div class="path-line"><span>Chemin</span><code id="qwenModelPath">—</code></div>
+          </div>
+          <div class="runtime-path-tools">
+            <input class="text-field mono-field" id="qwenRuntimePath" type="text" placeholder="Chemin vers python.exe qui contient qwen_tts" />
+            <div class="runtime-tool-row">
+              <button class="mini grow" id="rescanQwenRuntimeBtn" type="button">Re-détecter runtime + modèle</button>
+              <button class="mini grow" id="useQwenRuntimeBtn" type="button">Utiliser ce Python</button>
+            </div>
+            <input class="text-field mono-field" id="qwenModelPathInput" type="text" placeholder="Dossier Qwen3-TTS-12Hz-0.6B-Base déjà présent" />
+            <div class="runtime-tool-row">
+              <button class="mini grow" id="useQwenModelBtn" type="button">Utiliser ce dossier modèle</button>
+            </div>
+          </div>
+          <div class="download-state hidden" id="qwenQ8Notice"></div>
+          <button class="secondary-wide" id="downloadQwenBtn">Télécharger Qwen 0.6B Base automatiquement</button>
+          <p class="hint" id="qwenDownloadHint">Aucun <code>pip install</code>. Le bouton récupère uniquement le snapshot officiel Qwen3-TTS 0.6B Base et affiche la progression.</p>
+          <div class="download-panel hidden" id="downloadPanel">
+            <div class="download-head"><strong id="downloadLabel">Préparation…</strong><span id="downloadPercent">0%</span></div>
+            <div class="download-progress"><div id="downloadProgressBar"></div></div>
+            <div class="download-meta"><span id="downloadBytes">0 Mo</span><span id="downloadSpeed"></span><span id="downloadEta"></span></div>
+          </div>
+          <div class="download-state hidden" id="downloadState"></div>
+        </section>
+
+        <section class="setting-section">
+          <label for="cloneName">Nom de la voix</label>
+          <input class="text-field" id="cloneName" type="text" maxlength="80" placeholder="Ex. Narrator FR Qwen" />
+        </section>
+
+        <section class="setting-section two-col">
+          <div>
+            <label for="cloneLanguage">Langue de la référence</label>
+            <select id="cloneLanguage">
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div>
+            <label>Mode</label>
+            <div class="static-field">ICL HQ .pt + secours x-vector</div>
+          </div>
+        </section>
+
+        <section class="setting-section">
+          <label for="cloneAudio">Audio de référence</label>
+          <label class="file-drop" for="cloneAudio">
+            <input id="cloneAudio" type="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.aac" />
+            <strong id="cloneFileName">Choisir un audio</strong>
+            <span>Une référence propre et courte suffit. Conversion en WAV 24 kHz mono automatique.</span>
+          </label>
+        </section>
+
+        <button class="generate clone-btn" id="cloneBtn">Transcrire + créer les profils .pt</button>
+        <div class="clone-status hidden" id="cloneStatus"></div>
+
+        <section class="setting-section transcript-box hidden" id="transcriptBox">
+          <label>Transcription Faster-Whisper enregistrée dans le profil ICL</label>
+          <textarea id="cloneTranscript" readonly></textarea>
+        </section>
+      </div>
+
+      <div id="historyTab" class="tab-page">
+        <div class="history-head">
+          <div><strong>Dernières générations</strong><span>Conservées localement</span></div>
+          <button class="mini" id="refreshHistoryBtn">Actualiser</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js?v=1.8.0"></script>
+</body>
+</html>

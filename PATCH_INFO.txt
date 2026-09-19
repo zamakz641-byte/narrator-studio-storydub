@@ -1,0 +1,48 @@
+Narrator Studio · Qwen3-TTS 0.6B Native .PT patch v1.8.0
+==========================================================
+
+CORRECTION PRINCIPALE
+- v1.8 ne suppose plus que le modèle natif se trouve uniquement dans models/Qwen3-TTS-12Hz-0.6B-Base.
+- Il recherche automatiquement un snapshot Qwen3-TTS 0.6B Base déjà présent dans :
+  * Narrator Studio / models
+  * DubRoom / models et data/models
+  * StoryDub / models et data/models
+  * dossiers tts-qwen3-0.6*/model
+  * cache Hugging Face snapshots
+- Le bouton « Re-détecter runtime + modèle » relance la recherche sans redémarrer l'app.
+- Tu peux aussi coller manuellement le dossier du modèle existant puis « Utiliser ce dossier modèle ».
+
+IMPORTANT : Q8 ≠ SNAPSHOT NATIF
+- Le pack Q8 KoboldCpp existant est détecté et affiché, mais il n'est PAS supprimé ni retéléchargé.
+- qwen3-tts-0.6b-q8_0.gguf + tokenizer Q8 ne sont pas chargeables par le package Python qwen_tts.
+- Un vrai profil qwen_prompt_icl.pt nécessite donc un snapshot natif Base (config.json + model.safetensors + tokenizer audio).
+- Le patch ne prétend pas convertir le GGUF en .pt : ce serait faux.
+
+CLONAGE .PT
+- Faster-Whisper Turbo transcrit la référence.
+- Qwen natif encode la référence UNE seule fois.
+- Deux profils sont sauvegardés :
+    qwen_prompt_icl.pt   = haute fidélité ICL
+    qwen_prompt_xvec.pt  = fallback speaker-only
+- Les générations suivantes chargent ces .pt sans réencoder reference.wav.
+
+QUALITÉ / STABILITÉ
+- Essai 1 : T=0.90, repetition_penalty=1.05, top_k=50, top_p=1.0.
+- Retries avec petites variations si Auto-QC rejette un passage.
+- Dernier recours : x-vector .pt.
+- Auto-QC Faster-Whisper Turbo + rescue split conservés.
+- Correction CUDA/cublas du worker QC conservée.
+
+TÉLÉCHARGEMENT
+- Si aucun snapshot natif n'est trouvé, le bouton de téléchargement automatique reste disponible.
+- Progression, volume, vitesse et ETA sont affichés.
+- Le bouton disparaît dès que le snapshot natif est validé.
+- Aucun pip install n'est exécuté.
+
+INSTALLATION
+1. Fermer Narrator Studio.
+2. Copier le contenu du patch par-dessus le dossier actuel.
+3. Ne pas supprimer config.json, history/, quality_utils.py, qwen_voices/ ou models/.
+4. Relancer l'app.
+5. Dans « Cloner Qwen », cliquer « Re-détecter runtime + modèle ».
+6. Si ton snapshot natif existe ailleurs, colle son dossier dans le nouveau champ puis valide.
